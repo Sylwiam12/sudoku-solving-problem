@@ -81,8 +81,15 @@ def joinSubgrids(subgrids) -> List[List[int]]:
         - subgrids (List[List[List[int]]]): lista kolejnych bloków 3x3 planszy
 
     """
-    # TODO: połączyć bloki 3x3 z danej listy (9 elementów) w jedną planszę
-    pass
+
+    grid9x9 = [[0] * 9 for _ in range(9)]
+
+    for i, grid3x3 in enumerate(subgrids):
+        for j, row in enumerate(grid3x3):
+            for k, elem in enumerate(row):
+                grid9x9[j + i // 3 * 3][i % 3 * 3 + k] = elem
+
+    return grid9x9
 
 
 def createPopulation(sudoku: Sudoku) -> List[Solution]:
