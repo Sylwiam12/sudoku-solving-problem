@@ -94,9 +94,21 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     """
     P = []
     for _ in range(N_POPULATION):
-        grid = []
-        # TODO: tam gdzie są zera w planszy (czyli pola puste) przypisujemy przypadkowe wartości z zakresu 1-9, ale tak żeby w każdym bloku 3x3 nie było powtórzeń
-        P += (Solution(grid))
+        new_grid = np.copy(sudoku.grid)
+        for i in range(0, 9, 3):
+            for j in range(0, 9, 3):
+                nums = set(range(1, 10))
+                for x in range(3):
+                    for y in range(3):
+                        if new_grid[i + x][j + y] in nums:
+                            nums.remove(int(new_grid[i + x][j + y]))
+                nums = list(nums)
+                random.shuffle(nums)
+                for x in range(3):
+                    for y in range(3):
+                        if new_grid[i + x][j + y] == 0:
+                            new_grid[i + x][j + y] = nums.pop()
+        P.append(Solution(new_grid))
     return P
 
 
