@@ -63,15 +63,23 @@ def GA(sudoku: Sudoku) -> Sudoku:
     return best(P)
 
 
-def giveSubgrids(grid) -> List[List[List[int]]]:
+def giveSubgrids(grid: List[List[int]]) -> List[List[List[int]]]:
     """
     Funkcja zwracająca listę bloków 3x3 utworzoną z zadanej planszy sudoku
 
         - grid (List[List[int]]): plansza sudoku
 
     """
-    # TODO: z danej planszy sudoku (grid) stworzyć listę (9 elementów) kolejnych bloków 3x3 
-    pass
+    subgrids = []
+    
+    for i in range(0, 9, 3):
+        for j in range(0, 9, 3):
+            subgrid = [row[j:j+3] for row in grid[i:i+3]]
+            subgrids.append(subgrid)
+    
+    return subgrids
+
+
 
 
 def joinSubgrids(subgrids) -> List[List[int]]:
