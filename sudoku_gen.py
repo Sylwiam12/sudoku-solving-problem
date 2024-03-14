@@ -95,21 +95,23 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     P = []
     for _ in range(N_POPULATION):
         new_grid = np.copy(sudoku.grid)
-        for i in range(0, 9, 3):
-            for j in range(0, 9, 3):
-                nums = set(range(1, 10))
-                for x in range(3):
-                    for y in range(3):
-                        if new_grid[i + x][j + y] in nums:
-                            nums.remove(int(new_grid[i + x][j + y]))
-                nums = list(nums)
-                random.shuffle(nums)
-                for x in range(3):
-                    for y in range(3):
-                        if new_grid[i + x][j + y] == 0:
-                            new_grid[i + x][j + y] = nums.pop()
+        subgrids = giveSubgrids(new_grid)
+        for subgrid in subgrids:
+            nums = set(range(1, 10))
+            for row in subgrid:
+                for elem in row:
+                    if elem in nums:
+                        nums.remove(elem)
+            nums = list(nums)
+            random.shuffle(nums)
+            for i, row in enumerate(subgrid):
+                for j, elem in enumerate(row):
+                    if elem == 0:
+                        subgrid[i][j] = nums.pop()
+        new_grid = joinSubgrids(subgrids)
         P.append(Solution(new_grid))
     return P
+
 
 
 def mutation(P, prob) -> List[Solution]:
