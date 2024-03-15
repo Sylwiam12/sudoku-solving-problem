@@ -33,15 +33,30 @@ class Solution:
         self.fitness = fitness(grid)
 
 
-def fitness(grid) -> int:
-    """ 
+def fitness(grid: List[List[int]]) -> int:
+    """
     Funkcja zwracająca dopasowanie rozwiązania, przy czym fitness == 0 oznacza rozwiązanie poprawne
 
-        - grid (List[List[int]]): plansza sudoku
+    - grid (List[List[int]]): plansza sudoku
 
     """
-    # TODO: implementacja funkcji fitness: zliczanie duplikatów w każdej kolumnie, wierszu i bloku 3x3 - brak duplikatów oznacza dopasowanie równe zero, czyli poprawne rozwiązanie
-    pass
+    fitness_value = 0
+
+    # Sprawdzenie wierszy i kolumn
+    for i in range(9):
+        row = grid[i]
+        col = [grid[j][i] for j in range(9)]
+        if len(set(row)) != 9 or len(set(col)) != 9:
+            fitness_value += 1
+
+    # Sprawdzenie bloków 3x3
+    subgrids = giveSubgrids(grid)
+    for subgrid in subgrids:
+        flat_subgrid = [elem for row in subgrid for elem in row]
+        if len(set(flat_subgrid)) != 9:
+            fitness_value += 1
+
+    return fitness_value
 
 
 def GA(sudoku: Sudoku) -> Sudoku:
