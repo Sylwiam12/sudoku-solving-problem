@@ -11,6 +11,7 @@ W3 = 0.3
 
 iterations = 0
 
+
 def swap_elements(lst: List[int], pos1: int, pos2: int) -> None:
     '''
     Funkcja zamieniająca miejscami wartości na pozycjach pos1 i pos2 w podanej liście lst
@@ -100,7 +101,7 @@ class Particle:
         # TODO: implementacja pierwszej wersji krzyżowania
         next_pos = []
         self.update_curr_pos(next_pos)
-
+    
     def crossover2(self, global_best, weights) -> None:
         """
         Funkcja krzyżowania - druga wersja
@@ -110,12 +111,13 @@ class Particle:
         i dopiero wtedy zwracana jest cała plansza.
          
         """
+        
         parent_tup = (     # kolejność do ustalenia
             deepcopy(self.curr_pos),
             deepcopy(self.local_best_position),
             deepcopy(global_best).tolist()
         )
-
+        
         for row in range(9):
             mask = rnd.choices(parent_tup, weights=weights, k=9)    # maska wybierana ponownie dla każdego z wierszy - zweryfikować,
                                                                     # czy ma być tak jak teraz, czy maska ma być taka sama dla wszystkich wierszy danego sudoku
@@ -127,11 +129,11 @@ class Particle:
                     if other_parent is not parent:
                         pos_choice = other_parent[row].index(choice)
                         swap_elements(other_parent[row], pos, pos_choice)
-
+        
         # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
         next_pos = parent_tup[0]
         self.update_curr_pos(next_pos)
-        
+    
     def mutation(self) -> None:
         """
         Funkcja operacji mutacji:  swap two non-fixed elements in a row (patrz artykuł, sekcja 4.1.)
