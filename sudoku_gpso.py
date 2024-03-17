@@ -1,4 +1,7 @@
 from typing import List
+import random as rnd
+from copy import deepcopy   # dla upewnienia się, dla kopiowanych list zawierających listy zagnieżdzone (plansz sudoku) tworzone są kopie tych list zagnieżdzonych (wierszy), a nie są brane wprost
+
 
 N_SWARM = 100
 N_ITERATIONS = 100
@@ -7,6 +10,15 @@ W2 = 0.4
 W3 = 0.3
 
 iterations = 0
+
+def swap_elements(lst: List[int], pos1: int, pos2: int) -> None:
+    '''
+    Funkcja zamieniająca miejscami wartości na pozycjach pos1 i pos2 w podanej liście lst
+        - param lst: lista, w której następuje zamiana miejsc
+        - param pos1: pierwsza pozycja zamiany
+        - param pos2: druga pozycja zamiany
+    '''
+    lst[pos1], lst[pos2] = lst[pos2], lst[pos1]
 
 class Sudoku:
     def __init__(self, puzzle, level=1) -> None:
@@ -98,8 +110,26 @@ class Particle:
         i dopiero wtedy zwracana jest cała plansza.
          
         """
-        # TODO: implementacja drugiej wersji krzyżowania
-        next_pos = []
+        parent_tup = (     # kolejność do ustalenia
+            deepcopy(self.curr_pos),
+            deepcopy(self.local_best_position),
+            deepcopy(global_best).tolist()
+        )
+
+        for row in range(9):
+            mask = rnd.choices(parent_tup, weights=weights, k=9)    # maska wybierana ponownie dla każdego z wierszy - zweryfikować,
+                                                                    # czy ma być tak jak teraz, czy maska ma być taka sama dla wszystkich wierszy danego sudoku
+            for pos, parent in enumerate(mask):
+                choice = parent[row][pos]
+
+                for other_parent in parent_tup:
+
+                    if other_parent is not parent:
+                        pos_choice = other_parent[row].index(choice)
+                        swap_elements(other_parent[row], pos, pos_choice)
+
+        # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
+        next_pos = parent_tup[0]
         self.update_curr_pos(next_pos)
         
     def mutation(self) -> None:
