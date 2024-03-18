@@ -6,6 +6,8 @@ from random import sample
 import numpy as np
 from typing import List
 from numpy import random
+from copy import deepcopy
+
 
 # TODO: parametry do zmiany
 N_POPULATION = 200  # rozmiar populacji
@@ -122,13 +124,12 @@ def joinSubgrids(subgrids) -> List[List[int]]:
         - subgrids (List[List[List[int]]]): lista kolejnych bloków 3x3 planszy
 
     """
+    grid9x9 = [[] * 9 for _ in range(9)]
 
-    grid9x9 = [[0] * 9 for _ in range(9)]
+    for i, subgrid in enumerate(subgrids):
 
-    for i, grid3x3 in enumerate(subgrids):
-        for j, row in enumerate(grid3x3):
-            for k, elem in enumerate(row):
-                grid9x9[j + i // 3 * 3][i % 3 * 3 + k] = elem
+        for j, row in enumerate(subgrid):
+            grid9x9[i // 3 * 3 + j] += row
 
     return grid9x9
 
@@ -142,7 +143,7 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     """
     P = []
     for _ in range(N_POPULATION):
-        new_grid = np.copy(sudoku.grid)
+        new_grid = deepcopy(sudoku.grid)
         subgrids = giveSubgrids(new_grid)
         for subgrid in subgrids:
             nums = set(range(1, 10))
