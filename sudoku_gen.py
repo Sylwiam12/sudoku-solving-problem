@@ -162,8 +162,16 @@ def mutation(P, prob) -> List[Solution]:
         subgrids = giveSubgrids(solution.grid)
         for subgrid in subgrids:
             if random.random() < prob:  # czy zachodzi mutacja
-                # TODO: zamiana ze sobą dwóch przypadkowych elementów bloku 3x3 (swap) - nie można zamieniać pól, które były dane na początku
-                pass
+                      # Pobieranie możliwych do zamiany pozycji, z wykluczeniem pozycji ustalonych na początku
+                mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i//3*3 + r, i%3*3 + c) in solution.initial_positions)]
+                if len(mutable_positions) > 1:
+                    a, b = random.choice(range(len(mutable_positions)), size=2, replace=False)
+                    # Zamiana miejscami wartości
+                    ra, ca = mutable_positions[a]
+                    rb, cb = mutable_positions[b]
+                    subgrid[ra][ca], subgrid[rb][cb] = subgrid[rb][cb], subgrid[ra][ca]
+               
+                
         mutatedGrid = joinSubgrids(subgrids)
         PP += (Solution(mutatedGrid))
     return PP
