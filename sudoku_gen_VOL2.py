@@ -34,9 +34,6 @@ class Solution:
     def __init__(self, grid) -> None:
         self.grid = grid
         self.fitness = self.get_fitness(grid)
-        # self.initial_positions = [(0,0), (0,1), (0,5), (0,6), (0,8), (1,2), (1,3), (1,6), (2,0),(2,4),(2,5),(2,8),(3,0),(3,1),(3,2),(4,0),(4,2),(4,3),(4,5),(4,6),(5,3),(5,6),(5,7),(5,8),(6,2),(6,4),(6,6),(6,8),(7,0),(7,1),(7,3),(7,8),(8,0),(8,1),(8,2),(8,3),(8,7),(8,8)]
-        # self.fitness = 10
-        # self.initial_positions = get_initial_pos()
 
     def get_fitness(self, grid: List[List[int]]) -> int:
         """
@@ -64,9 +61,6 @@ class Solution:
                 fitness_value += 1
 
         return fitness_value
-
-    # TODO: implementacja funkcji fitness: zliczanie duplikatów w każdej kolumnie, wierszu i bloku 3x3 - brak duplikatów oznacza dopasowanie równe zero, czyli poprawne rozwiązanie
-    pass
 
 
 def GA(sudoku: Sudoku) -> Sudoku:
@@ -149,32 +143,6 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
         P.append(Solution(new_grid))
     return P
 
-
-# def mutation(P, prob, sudoku: Sudoku) -> List[Solution]:
-#     """
-#     Funckja zwracająca populację rozwiązań sudoku poddanych operacji mutacji z zadanym prawdopodobieństwem mutacji
-#
-#         - P (List[Solution]): populacja początkowa
-#         - prob (float): prawdopodobieństwo mutacji
-#
-#     """
-#     PP = []
-#     for solution in P:
-#         subgrids = giveSubgrids(solution.grid)
-#         for subgrid in subgrids:
-#             if random.random() < prob:  # czy zachodzi mutacja
-#                 # Pobieranie możliwych do zamiany pozycji, z wykluczeniem pozycji ustalonych na początku
-#                 mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i // 3 * 3 + r, i % 3 * 3 + c) in solution.initial_positions)]
-#                 if len(mutable_positions) > 1:
-#                     a, b = random.choice(range(len(mutable_positions)), size=2, replace=False)
-#                     # Zamiana miejscami wartości
-#                     ra, ca = mutable_positions[a]
-#                     rb, cb = mutable_positions[b]
-#                     subgrid[ra][ca], subgrid[rb][cb] = subgrid[rb][cb], subgrid[ra][ca]
-#
-#         mutatedGrid = joinSubgrids(subgrids)
-#         PP += (Solution(mutatedGrid))
-#     return PP
 
 def mutation(P, prob, sudoku: Sudoku) -> List[Solution]:
     """
