@@ -26,9 +26,29 @@ class Sudoku:
         self.level = level
 
     def __str__(self) -> str:
-        # TODO: wypisywanie planszy sudoku wraz z ich poziomem trudności
-        pass
-
+        separator_line = "+-------+------+------+"
+        rows = []
+        for i in range(9):
+            if i % 3 == 0:
+                rows.append(separator_line)
+            row = "|"
+            for j in range(9):
+                if j % 3 == 0:
+                    row += " "
+                if self.grid[i][j] == 0:
+                    row += "."
+                else:
+                    row += str(self.grid[i][j])
+                row += " "
+            row += "|"
+            rows.append(row)
+        rows.append(separator_line)
+        
+        # Informacja o poziomie trudności:
+        level_info = f"Difficulty Level: {self.level}"
+        rows.insert(0, level_info)
+        
+        return '\n'.join(rows)
 
 class Solution:
     def __init__(self, grid) -> None:
