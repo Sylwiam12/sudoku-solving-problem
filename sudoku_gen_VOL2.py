@@ -8,7 +8,7 @@ from typing import List
 from numpy import random
 
 # TODO: parametry do zmiany
-N_POPULATION = 100  # rozmiar populacji
+N_POPULATION = 200  # rozmiar populacji
 MAX_ITERATIONS = 200  # maksymalna liczba iteracji dla algorytmu genetycznego
 MUTATION_PROB = 0.1  # prawdopodobieństwo mutacji
 CROSSOVER_PROB = 1  # prawdopodobieństwo krzyżowania
@@ -34,8 +34,9 @@ class Solution:
     def __init__(self, grid) -> None:
         self.grid = grid
         self.fitness = self.get_fitness(grid)
-        self.initial_positions = [(0,0), (0,1), (0,5), (0,6), (0,8), (1,2), (1,3), (1,6), (2,0),(2,4),(2,5),(2,8),(3,0),(3,1),(3,2),(4,0),(4,2),(4,3),(4,5),(4,6),(5,3),(5,6),(5,7),(5,8),(6,2),(6,4),(6,6),(6,8),(7,0),(7,1),(7,3),(7,8),(8,0),(8,1),(8,2),(8,3),(8,7),(8,8)]
+        # self.initial_positions = [(0,0), (0,1), (0,5), (0,6), (0,8), (1,2), (1,3), (1,6), (2,0),(2,4),(2,5),(2,8),(3,0),(3,1),(3,2),(4,0),(4,2),(4,3),(4,5),(4,6),(5,3),(5,6),(5,7),(5,8),(6,2),(6,4),(6,6),(6,8),(7,0),(7,1),(7,3),(7,8),(8,0),(8,1),(8,2),(8,3),(8,7),(8,8)]
         # self.fitness = 10
+        # self.initial_positions = get_initial_pos()
 
     def get_fitness(self, grid: List[List[int]]) -> int:
         """
@@ -80,10 +81,9 @@ def GA(sudoku: Sudoku) -> Sudoku:
     P = createPopulation(sudoku)
     while not converge(P) and iterations < MAX_ITERATIONS:  # wykonujemy dopóki nie znaleziono dokładnego rozwiązania lub nie wykonano określonej liczby iteracji
         PP = crossover(P)
-        PPP = mutation(PP, prob=MUTATION_PROB)
+        PPP = mutation(PP, prob=MUTATION_PROB, sudoku=sudoku)
         P = select(P, PPP)
         iterations += 1
-    print(P[0].fitness)
     return best(P)
 
 
@@ -176,7 +176,7 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
 #         PP += (Solution(mutatedGrid))
 #     return PP
 
-def mutation(P, prob) -> List[Solution]:
+def mutation(P, prob, sudoku: Sudoku) -> List[Solution]:
     """
     Funckja zwracająca populację rozwiązań sudoku poddanych operacji mutacji z zadanym prawdopodobieństwem mutacji
 
@@ -186,12 +186,17 @@ prob (float): prawdopodobieństwo mutacji
 
     """
     PP = []
+    initial_positions = []
+    for i in range(9):
+        for j in range(9):
+            if sudoku.grid[i][j] != 0:
+                initial_positions += (i, j)
     for solution in P:
         subgrids = giveSubgrids(solution.grid)
         for i, subgrid in enumerate(subgrids):
             if random.random() < prob:  # czy zachodzi mutacja
                 # Pobieranie możliwych do zamiany pozycji, z wykluczeniem pozycji ustalonych na początku
-                mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i // 3 * 3 + r, i % 3 * 3 + c) in solution.initial_positions)]
+                mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i // 3 * 3 + r, i % 3 * 3 + c) in initial_positions)]
                 if len(mutable_positions) > 1:
                     a, b = sample(range(len(mutable_positions)), 2)
                     ra, ca = mutable_positions[a]
@@ -304,10 +309,22 @@ def main():
              [0, 0, 6, 0, 8, 0, 3, 0, 5],
              [7, 4, 0, 5, 0, 0, 0, 0, 1],
              [5, 8, 1, 4, 0, 0, 0, 2, 6]]
+    # grid1 = [
+    #     [9, 0, 2, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 1, 5],
+    #     [7, 0, 0, 6, 0, 2, 0, 0, 0],
+    #     [0, 0, 0, 7, 9, 0, 0, 0, 0],
+    #     [0, 6, 1, 0, 8, 0, 0, 0, 2],
+    #     [0, 0, 0, 0, 3, 0, 1, 0, 0],
+    #     [0, 0, 7, 0, 0, 0, 9, 4, 0],
+    #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
+    #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
+    # ]
 
     result = GA(Sudoku(grid1))
     for row in result.grid:
         print(row)
+    print(Solution(result.grid).fitness)
 
 
     # grid2 = [[0, 6, 0, 0, 1, 3, 5, 4, 0],
