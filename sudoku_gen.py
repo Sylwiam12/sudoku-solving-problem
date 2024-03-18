@@ -110,10 +110,24 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     """
     P = []
     for _ in range(N_POPULATION):
-        grid = []
-        # TODO: tam gdzie są zera w planszy (czyli pola puste) przypisujemy przypadkowe wartości z zakresu 1-9, ale tak żeby w każdym bloku 3x3 nie było powtórzeń
-        P += (Solution(grid))
+        new_grid = np.copy(sudoku.grid)
+        subgrids = giveSubgrids(new_grid)
+        for subgrid in subgrids:
+            nums = set(range(1, 10))
+            for row in subgrid:
+                for elem in row:
+                    if elem in nums:
+                        nums.remove(elem)
+            nums = list(nums)
+            random.shuffle(nums)
+            for i, row in enumerate(subgrid):
+                for j, elem in enumerate(row):
+                    if elem == 0:
+                        subgrid[i][j] = nums.pop()
+        new_grid = joinSubgrids(subgrids)
+        P.append(Solution(new_grid))
     return P
+
 
 
 def mutation(P, prob) -> List[Solution]:
