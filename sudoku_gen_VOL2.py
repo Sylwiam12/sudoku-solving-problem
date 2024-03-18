@@ -48,8 +48,6 @@ class Solution:
         for i in range(9):
             row = grid[i]
             col = [grid[j][i] for j in range(9)]
-            # if len(set(row)) != 9 or len(set(col)) != 9:
-            #     fitness_value += 1
             fitness_value += (9 - len(set(row)))
             fitness_value += (9 - len(set(col)))
 
@@ -57,8 +55,7 @@ class Solution:
         subgrids = giveSubgrids(grid)
         for subgrid in subgrids:
             flat_subgrid = [elem for row in subgrid for elem in row]
-            if len(set(flat_subgrid)) != 9:
-                fitness_value += 1
+            fitness_value += (9 - len(set(flat_subgrid)))
 
         return fitness_value
 
