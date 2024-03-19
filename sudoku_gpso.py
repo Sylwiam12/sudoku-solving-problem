@@ -1,13 +1,13 @@
-from typing import List
+from typing import List, Callable, Tuple
 import random as rnd
-from copy import deepcopy   # dla upewnienia się, dla kopiowanych list zawierających listy zagnieżdzone (plansz sudoku) tworzone są kopie tych list zagnieżdzonych (wierszy), a nie są brane wprost
+from copy import deepcopy
 
 
 N_SWARM = 100
 N_ITERATIONS = 100
-W1 = 0.3
-W2 = 0.4
-W3 = 0.3
+W1 = 0.3    # waga obecnej pozycji curr_pos
+W2 = 0.4    # waga najlepszej pozycji lokalnej
+W3 = 0.3    # waga najlepszej pozycji globalnej global_best_position
 
 iterations = 0
 
@@ -81,16 +81,49 @@ class Particle:
         #TODO: porównanie local_best_position z curr_pos i uaktualnienie wartości local_best_position
         pass
 
-    def get_mask(self, weights) -> List[int]:
-
-        """"
-        Funkcja do wylosowania maski z uwzględnieniem prawdopodobieństw w postacji wag
-        
+    @staticmethod
+    def decorate_crossover(func) -> Callable[[List[List[int]], Tuple[List[List[int]]]], None]:
         """
-        #TODO: stworzenie listy stanowaiącej maskę z uwzględnieniem podanych wag (watośći w liście są z zakresu 1-3)
-        pass
+        Dekorator funkcji crossover do zainicjalizowania tuple'a z rodzicami i udostępnienia funkcji do wylosowania
+        maski z uwzględnieniem prawdopodobieństw w postacji wag
 
-    def crossover1(self, global_best, weights) -> None:
+            - func: funkcja do wykonania (crossover1, bądź crossover2), której funkcjonalności mają zostać
+            rozszerzone o to, co jest we wrapperze
+
+        """
+
+        def wrapper(self, global_best, weights) -> None:
+            """
+            Przy wywołaniu funkcji crossover następuje de facto wywołanie funkcji wrapper, stąd przy wywołaniu crossover
+            podajemy tylko parametry wrappera, a nie funkcji crossover
+
+            """
+
+            parent_tup = (
+                deepcopy(self.curr_pos),
+                deepcopy(self.local_best_position),
+                deepcopy(global_best)
+            )
+
+            weights_frozen = weights
+
+            def get_mask() -> List[List[List[int]]]:
+                """
+                Funkcja zagnieżdzona, która jest dostępna do wywołania w trakcie działania funkcji crossover
+                (może korzystać z parametrów "zamrożonych", stąd brak parametrów w nawiasach)
+
+                """
+
+                return rnd.choices(parent_tup, weights=weights_frozen, k=9)
+
+
+            func(self, parent_tup, get_mask)  # wykonanie funkcji crossover
+
+        return wrapper
+
+
+    @decorate_crossover
+    def crossover1(self, parent_tup, get_mask) -> None:
         """
         Funkcja krzyżowania - pierwsza wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -99,10 +132,14 @@ class Particle:
 
         """
         # TODO: implementacja pierwszej wersji krzyżowania
+
+        mask = get_mask()
+
         next_pos = []
         self.update_curr_pos(next_pos)
-    
-    def crossover2(self, global_best, weights) -> None:
+
+    @decorate_crossover
+    def crossover2(self, parent_tup, get_mask):
         """
         Funkcja krzyżowania - druga wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -112,15 +149,9 @@ class Particle:
          
         """
         
-        parent_tup = (     # kolejność do ustalenia
-            deepcopy(self.curr_pos),
-            deepcopy(self.local_best_position),
-            deepcopy(global_best).tolist()
-        )
-        
         for row in range(9):
-            mask = rnd.choices(parent_tup, weights=weights, k=9)    # maska wybierana ponownie dla każdego z wierszy - zweryfikować,
-                                                                    # czy ma być tak jak teraz, czy maska ma być taka sama dla wszystkich wierszy danego sudoku
+            mask = get_mask()
+
             for pos, parent in enumerate(mask):
                 choice = parent[row][pos]
 
