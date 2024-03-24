@@ -65,8 +65,9 @@ class Particle:
         Funkcja służąca do uaktualnienia najlepszej pozycji lokalnej
         
         """
-        #TODO: porównanie local_best_position z curr_pos i uaktualnienie wartości local_best_position
-        pass
+        if self.fitness < Paticle.set_fitness(next_pos):
+           self.local_best_position = next_pos
+           self.fitness = Particle.set_fitness(next_pos)
 
     def get_mask(self, weights) -> List[int]:
 
