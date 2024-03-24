@@ -18,8 +18,29 @@ class Sudoku:
         self.level = level
 
     def __str__(self) -> str:
-        # TODO: wypisywanie planszy sudoku wraz z ich poziomem trudności
-        pass
+        separator_line = "+-------+------+------+"
+        rows = []
+        for i in range(9):
+            if i % 3 == 0:
+                rows.append(separator_line)
+            row = "|"
+            for j in range(9):
+                if j % 3 == 0:
+                    row += " "
+                if self.grid[i][j] == 0:
+                    row += "."
+                else:
+                    row += str(self.grid[i][j])
+                row += " "
+            row += "|"
+            rows.append(row)
+        rows.append(separator_line)
+        
+        # Informacja o poziomie trudności:
+        level_info = f"Difficulty Level: {self.level}"
+        rows.insert(0, level_info)
+        
+        return '\n'.join(rows)
 
 class Particle:
     """
@@ -139,8 +160,11 @@ class Swarm:
         Funkcja służąca do uaktualnienia najlepszej pozycji globalnej
 
         """
-        # TODO: należy ustalić parametr self.global_best_position, czyli wybierać spośród self.particles cząstkę o najlepszym dopasowaniu
-        pass
+        best = self.particles[0]
+        for particle in self.particles:
+            if particle.fitness > best.fitness:
+                best = particle
+        self.global_best_position = best
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
@@ -177,8 +201,10 @@ def converge(swarm: Swarm) -> bool:
     """
     Funkcja sprawdzająca czy należy przerwać algorytm GPSO
     """
-    # TODO: czy jest jakaś cząstka z dopasowaniem 273
-    pass
+    for particle in swarm.particles:
+        if particle.fitness == 273:
+            return True
+    return False
 
 def main():
     pass
