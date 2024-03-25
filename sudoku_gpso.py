@@ -1,3 +1,5 @@
+import copy
+import random
 from typing import List
 
 N_SWARM = 100
@@ -58,15 +60,23 @@ class Particle:
             - fitness int: miara dopasowania
             - sudoku (List[List[int]]): plansza
         """
-    def first_position(self, sudoku) -> None:
+
+    def first_position(self, sudoku: Sudoku) -> List[List[int]]:
         """
         Funkcja ustalająca pierwszą pozycję cząstki
 
             - sudoku (List[List[int]]): plansza sudoku
 
         """
-        # TODO: przypisywanie randomowych wartości z zakresu 1-9 pustym polom (nie ruszamy tego co było w podanej planszy) tak, żeby w każdym wierszu nie było powtórzeń
-        pass
+        new_grid = copy.deepcopy(sudoku.grid)
+        for row in new_grid:
+            empty_indices = [i for i, x in enumerate(row) if x == 0]
+            possible_values = list(set(range(1, 10)) - set(row))
+            random.shuffle(possible_values)
+            for index in empty_indices:
+                row[index] = possible_values.pop()
+
+        return new_grid
 
     def update_curr_pos(self, pos) -> None:
         self.set_local_best_pos(pos)
