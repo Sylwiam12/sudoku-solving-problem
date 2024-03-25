@@ -65,18 +65,17 @@ class Particle:
         """
         Funkcja ustalająca pierwszą pozycję cząstki
 
-            - sudoku (List[List[int]]): plansza sudoku
+            - sudoku (Sudoku): plansza sudoku
 
         """
-        new_grid = copy.deepcopy(sudoku.grid)
-        for row in new_grid:
+        for row in sudoku.grid:
             empty_indices = [i for i, x in enumerate(row) if x == 0]
             possible_values = list(set(range(1, 10)) - set(row))
             random.shuffle(possible_values)
             for index in empty_indices:
                 row[index] = possible_values.pop()
 
-        return new_grid
+        return sudoku.grid
 
     def update_curr_pos(self, pos) -> None:
         self.set_local_best_pos(pos)
