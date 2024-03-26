@@ -6,7 +6,7 @@ from copy import deepcopy
 
 N_SWARM = 100
 N_ITERATIONS = 100
-W1 = 0.3    # waga obecnej pozycji curr_pos
+W1 = 0.1    # waga obecnej pozycji curr_pos
 W2 = 0.4    # waga najlepszej pozycji lokalnej
 W3 = 0.3    # waga najlepszej pozycji globalnej global_best_position
 
@@ -61,7 +61,7 @@ class Particle:
     Klasa Particle opisująca cząstkę w roju
     """
     def __init__(self, sudoku: Sudoku) -> None:
-        self.curr_pos = self.first_position(sudoku)
+        self.curr_pos = self.first_position(deepcopy(sudoku))
         self.local_best_position = self.curr_pos
         self.fitness = self.set_fitness(self.curr_pos)
         self.sudoku = sudoku
@@ -80,6 +80,7 @@ class Particle:
             - sudoku (Sudoku): plansza sudoku
 
         """
+
         for row in sudoku.grid:
             empty_indices = [i for i, x in enumerate(row) if x == 0]
             possible_values = list(set(range(1, 10)) - set(row))
@@ -116,6 +117,7 @@ class Particle:
 
         # Sumowanie wartości fitness dla wierszy, kolumn i kwadratów
         total_fitness = row_fitness + col_fitness + box_fitness
+
         return total_fitness
 
     def set_local_best_pos(self, next_pos) -> None:
@@ -123,9 +125,9 @@ class Particle:
         Funkcja służąca do uaktualnienia najlepszej pozycji lokalnej
         
         """
-        if self.fitness < Particle.set_fitness(next_pos):
-           self.local_best_position = next_pos
-           self.fitness = self.set_fitness()
+        if self.fitness < self.set_fitness(next_pos):
+            self.local_best_position = next_pos
+            self.fitness = self.set_fitness(next_pos)
 
     @staticmethod
     def decorate_crossover(func) -> Callable[[List[List[int]], Tuple[List[List[int]]]], None]:
@@ -155,7 +157,7 @@ class Particle:
 
             def gen_mask(loops: int) -> List[List[List[int]]]:
                 """
-                Funkcja zagnieżdzona, która jest dostępna do wywołania w trakcie działania funkcji crossover
+                Funkcja zagnieżdzona w postaci generatora, który jest dostępny do wywołania w trakcie działania funkcji crossover
                 (może korzystać z parametrów "zamrożonych", stąd brak parametrów w nawiasach)
 
                 """
@@ -222,7 +224,7 @@ class Particle:
         next_pos = [row[:] for row in self.curr_pos]  # Tworzymy głęboką kopię obecnej pozycji
         for i in range(9):  # i - wiersz, j - kolumna
             # wyszukanie pozycji, które można zamienić
-            non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.sudoku.grid[i][j] == 0]
+            non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.curr_pos[i][j] == 0]
             
             if len(non_fixed_positions) > 1:
                 swap_positions = rnd.sample(non_fixed_positions, 2)
@@ -253,6 +255,7 @@ class Swarm:
 
     def add_particle(self, particle: Particle) -> None:
         self.particles.append(particle)
+        self.size += 1
 
     def set_global_best(self) -> None:
         
@@ -262,8 +265,10 @@ class Swarm:
         """
         best = self.particles[0]
         for particle in self.particles:
+            print(particle.fitness)
             if particle.fitness > best.fitness:
                 best = particle
+
         self.global_best_position = best
 
     def get_global_best(self) -> List[List[int]]:
@@ -287,7 +292,7 @@ def GPSO(sudoku: Sudoku) -> Sudoku:
 
         for particle in swarm.particles:
 
-            particle.crossover1(swarm.get_global_best().curr_pos, swarm.get_weights())
+            particle.crossover2(swarm.get_global_best().curr_pos, swarm.get_weights())
             particle.mutation()
             swarm2.add_particle(particle)
 
@@ -296,7 +301,7 @@ def GPSO(sudoku: Sudoku) -> Sudoku:
           
         iterations += 1
         
-    return Sudoku(swarm.get_global_best())
+    return swarm.get_global_best()
 
 def converge(swarm: Swarm) -> bool: 
     """
@@ -308,13 +313,13 @@ def converge(swarm: Swarm) -> bool:
     return False
 
 def main():
-    grid1 = [[6, 5, 0, 0, 0, 7, 9, 0, 3],
+    grid1 = [[6, 0, 0, 0, 0, 7, 9, 0, 3],
              [0, 0, 2, 1, 0, 0, 6, 0, 0],
-             [9, 0, 0, 0, 6, 3, 0, 0, 4],
+             [9, 0, 0, 0, 6, 3, 0, 0, 0],
              [1, 2, 9, 0, 0, 0, 0, 0, 0],
              [3, 0, 4, 9, 0, 8, 1, 0, 0],
              [0, 0, 0, 3, 0, 0, 4, 7, 9],
-             [0, 0, 6, 0, 8, 0, 3, 0, 5],
+             [0, 0, 6, 0, 8, 0, 0, 0, 0],
              [7, 4, 0, 5, 0, 0, 0, 0, 1],
              [5, 8, 1, 4, 0, 0, 0, 2, 6]]
     # grid1 = [
@@ -328,13 +333,12 @@ def main():
     #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
     #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
     # ]
+    print('Initial sudoku fitness:', Particle(Sudoku(grid1)).fitness)
 
     best_particle = GPSO(Sudoku(grid1))
 
-    for row in best_particle.grid.sudoku.grid:
-        print(row)
-
-    print(best_particle.grid.fitness)
+    print(Sudoku(best_particle.curr_pos))
+    print('Final fitness: ', best_particle.fitness)
 
 
 if __name__ == "__main__":
