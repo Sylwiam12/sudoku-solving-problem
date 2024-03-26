@@ -102,8 +102,25 @@ class Particle:
         sum of number of unique elements in each box (patrz artykuł, sekcja 4.1)
         
         """
-        # TODO: implementacja jak w artykule
-        pass
+        
+       
+        
+        # Suma unikalnych elementów w każdym wierszu
+        row_fitness = sum(len(set(row)) for row in self.curr_pos)
+
+        # Suma unikalnych elementów w każdej kolumnie
+        col_fitness = sum(len(set(col)) for col in zip(*self.curr_pos))
+
+        # Suma unikalnych elementów w każdym kwadracie 3x3
+        box_fitness = 0
+        for i in range(0, 9, 3):
+            for j in range(0, 9, 3):
+                box = [self.curr_pos[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
+                box_fitness += len(set(box))
+
+        # Sumowanie wartości fitness dla wierszy, kolumn i kwadratów
+        total_fitness = row_fitness + col_fitness + box_fitness
+        return total_fitness
 
     def set_local_best_pos(self, next_pos) -> None:
         """
