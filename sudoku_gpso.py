@@ -1,4 +1,5 @@
 from typing import List
+import random
 
 N_SWARM = 100
 N_ITERATIONS = 100
@@ -127,7 +128,17 @@ class Particle:
         """
         Funkcja operacji mutacji:  swap two non-fixed elements in a row (patrz artykuł, sekcja 4.1.)
         """
-        next_pos = []
+
+        next_pos = [row[:] for row in self.curr_pos]  # Tworzymy głęboką kopię obecnej pozycji
+        for i in range(9):  # i - wiersz, j - kolumna
+            # wyszukanie pozycji, które można zamienić
+            non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.sudoku.grid[i][j] == 0]
+            
+            if len(non_fixed_positions) > 1:
+                swap_positions = random.sample(non_fixed_positions, 2) 
+
+                next_pos[i][swap_positions[0]], next_pos[i][swap_positions[1]] = next_pos[i][swap_positions[1]], next_pos[i][swap_positions[0]]
+        
         self.update_curr_pos(next_pos)
 
 
