@@ -1,4 +1,3 @@
-
 from typing import List, Callable, Tuple
 import random as rnd
 from copy import deepcopy
@@ -64,7 +63,7 @@ class Particle:
     def __init__(self, sudoku: Sudoku) -> None:
         self.curr_pos = self.first_position(sudoku)
         self.local_best_position = self.curr_pos
-        self.fitness = self.set_fitness()
+        self.fitness = self.set_fitness(self.curr_pos)
         self.sudoku = sudoku
         
         """
@@ -94,7 +93,8 @@ class Particle:
         self.set_local_best_pos(pos)
         self.curr_pos = pos
 
-    def set_fitness(self) -> int:
+    @staticmethod
+    def set_fitness(pos) -> int:
         """
         Funkcja obliczająca dopasowanie cząstki: sum of number of unique elements in each row, plus, sum of number of unique elements in each column, plus, 
         sum of number of unique elements in each box (patrz artykuł, sekcja 4.1)
@@ -102,16 +102,16 @@ class Particle:
         """
 
         # Suma unikalnych elementów w każdym wierszu
-        row_fitness = sum(len(set(row)) for row in self.curr_pos)
+        row_fitness = sum(len(set(row)) for row in pos)
 
         # Suma unikalnych elementów w każdej kolumnie
-        col_fitness = sum(len(set(col)) for col in zip(*self.curr_pos))
+        col_fitness = sum(len(set(col)) for col in zip(*pos))
 
         # Suma unikalnych elementów w każdym kwadracie 3x3
         box_fitness = 0
         for i in range(0, 9, 3):
             for j in range(0, 9, 3):
-                box = [self.curr_pos[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
+                box = [pos[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
                 box_fitness += len(set(box))
 
         # Sumowanie wartości fitness dla wierszy, kolumn i kwadratów
@@ -125,7 +125,7 @@ class Particle:
         """
         if self.fitness < Particle.set_fitness(next_pos):
            self.local_best_position = next_pos
-           self.fitness = Particle.set_fitness(next_pos)
+           self.fitness = self.set_fitness()
 
     @staticmethod
     def decorate_crossover(func) -> Callable[[List[List[int]], Tuple[List[List[int]]]], None]:
@@ -264,7 +264,7 @@ class Swarm:
         for particle in self.particles:
             if particle.fitness > best.fitness:
                 best = particle
-        self.global_best_position = best.curr_pos
+        self.global_best_position = best
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
@@ -281,15 +281,16 @@ def GPSO(sudoku: Sudoku) -> Sudoku:
         swarm.add_particle(Particle(sudoku))
     
     swarm.set_global_best()
-    
-    swarm2 = Swarm(w1=W1, w2=W2, w3=W3)
-    
+
     while not converge(swarm) and iterations < N_ITERATIONS:
+        swarm2 = Swarm(w1=W1, w2=W2, w3=W3)
+
         for particle in swarm.particles:
-            particle.crossover1(swarm.get_global_best(), swarm.get_weights())
+
+            particle.crossover1(swarm.get_global_best().curr_pos, swarm.get_weights())
             particle.mutation()
-            swarm2.add_particle(particle)           
-            
+            swarm2.add_particle(particle)
+
         swarm = swarm2
         swarm.set_global_best() # TODO: omówić sposób updatowania global_best - czy po każdym krzyżowaniu cząstki? czy tak jak teraz, na nowym roju? 
           
@@ -328,10 +329,12 @@ def main():
     #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
     # ]
 
-    result = GPSO(Sudoku(grid1))
-    for row in result.grid:
+    best_particle = GPSO(Sudoku(grid1))
+
+    for row in best_particle.grid.sudoku.grid:
         print(row)
-    print(Solution(result.grid).fitness)
+
+    print(best_particle.grid.fitness)
 
 
 if __name__ == "__main__":
