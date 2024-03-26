@@ -2,7 +2,6 @@
 from typing import List, Callable, Tuple
 import random as rnd
 from copy import deepcopy
-import random
 
 
 
@@ -85,7 +84,7 @@ class Particle:
         for row in sudoku.grid:
             empty_indices = [i for i, x in enumerate(row) if x == 0]
             possible_values = list(set(range(1, 10)) - set(row))
-            random.shuffle(possible_values)
+            rnd.shuffle(possible_values)
             for index in empty_indices:
                 row[index] = possible_values.pop()
 
@@ -226,7 +225,7 @@ class Particle:
             non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.sudoku.grid[i][j] == 0]
             
             if len(non_fixed_positions) > 1:
-                swap_positions = random.sample(non_fixed_positions, 2) 
+                swap_positions = rnd.sample(non_fixed_positions, 2)
 
                 next_pos[i][swap_positions[0]], next_pos[i][swap_positions[1]] = next_pos[i][swap_positions[1]], next_pos[i][swap_positions[0]]
         
