@@ -2,21 +2,28 @@
 # - patrz artykuł J.M.Weiss, Genetic Algorithms and Sudoku, 2009
 
 import random
+from random import sample
 import numpy as np
 from typing import List
 from numpy import random
+from copy import deepcopy
+
 
 # TODO: parametry do zmiany
-N_POPULATION = 100  # rozmiar populacji
+N_POPULATION = 200  # rozmiar populacji
 MAX_ITERATIONS = 200  # maksymalna liczba iteracji dla algorytmu genetycznego
-MUTATION_PROB = 0.04  # prawdopodobieństwo mutacji
-CROSSOVER_PROB = 1    # prawdopodobieństwo krzyżowania
+MUTATION_PROB = 0.1  # prawdopodobieństwo mutacji
+CROSSOVER_PROB = 1  # prawdopodobieństwo krzyżowania
 
 iterations = 0
 
 
 class Sudoku:
-    def __init__(self, puzzle: List[List[int]], level: int = 1) -> None:
+    def __init__(self, puzzle, level=1) -> None:
+        """
+            - puzzle (List[List[int]]): plansza sudoku z częściowym wypełnieniem; puste pola wypełniane zerami
+            - level (int): poziom trudności sudoku w skali 1-5 (albo inna skala)
+        """
         self.grid = puzzle
         self.level = level
 
@@ -45,58 +52,34 @@ class Sudoku:
         
         return '\n'.join(rows)
 
-# Przykład:
-puzzle = [
-    [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    [8, 0, 0, 0, 6, 0, 0, 0, 3],
-    [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    [0, 0, 0, 0, 8, 0, 0, 7, 9]
-]
-sudoku = Sudoku(puzzle)
-print("Sudoku Puzzle:")
-print(sudoku)
-
-
 class Solution:
     def __init__(self, grid) -> None:
         self.grid = grid
-        self.fitness = fitness(grid)
-        # self.fitness = 10
+        self.fitness = self.get_fitness(grid)
 
+    def get_fitness(self, grid: List[List[int]]) -> int:
+        """
+        Funkcja zwracająca dopasowanie rozwiązania, przy czym fitness == 0 oznacza rozwiązanie poprawne
 
+        - grid (List[List[int]]): plansza sudoku
 
-    def fitness(grid: List[List[int]]) -> int:
-    """
-    Funkcja zwracająca dopasowanie rozwiązania, przy czym fitness == 0 oznacza rozwiązanie poprawne
+        """
+        fitness_value = 0
 
-    - grid (List[List[int]]): plansza sudoku
+        # Sprawdzenie wierszy i kolumn
+        for i in range(9):
+            row = grid[i]
+            col = [grid[j][i] for j in range(9)]
+            fitness_value += (9 - len(set(row)))
+            fitness_value += (9 - len(set(col)))
 
-    """
-    fitness_value = 0
+        # Sprawdzenie bloków 3x3
+        subgrids = giveSubgrids(grid)
+        for subgrid in subgrids:
+            flat_subgrid = [elem for row in subgrid for elem in row]
+            fitness_value += (9 - len(set(flat_subgrid)))
 
-    # Sprawdzenie wierszy i kolumn
-    for i in range(9):
-        row = grid[i]
-        col = [grid[j][i] for j in range(9)]
-        if len(set(row)) != 9 or len(set(col)) != 9:
-            fitness_value += 1
-
-    # Sprawdzenie bloków 3x3
-    subgrids = giveSubgrids(grid)
-    for subgrid in subgrids:
-        flat_subgrid = [elem for row in subgrid for elem in row]
-        if len(set(flat_subgrid)) != 9:
-            fitness_value += 1
-
-    return fitness_value
-
-    # TODO: implementacja funkcji fitness: zliczanie duplikatów w każdej kolumnie, wierszu i bloku 3x3 - brak duplikatów oznacza dopasowanie równe zero, czyli poprawne rozwiązanie
-    pass
+        return fitness_value
 
 
 def GA(sudoku: Sudoku) -> Sudoku:
@@ -111,10 +94,9 @@ def GA(sudoku: Sudoku) -> Sudoku:
     P = createPopulation(sudoku)
     while not converge(P) and iterations < MAX_ITERATIONS:  # wykonujemy dopóki nie znaleziono dokładnego rozwiązania lub nie wykonano określonej liczby iteracji
         PP = crossover(P)
-        PPP = mutation(PP, prob=MUTATION_PROB)
+        PPP = mutation(PP, prob=MUTATION_PROB, sudoku=sudoku)
         P = select(P, PPP)
         iterations += 1
-
     return best(P)
 
 
@@ -126,12 +108,12 @@ def giveSubgrids(grid: List[List[int]]) -> List[List[List[int]]]:
 
     """
     subgrids = []
-    
+
     for i in range(0, 9, 3):
         for j in range(0, 9, 3):
-            subgrid = [row[j:j+3] for row in grid[i:i+3]]
+            subgrid = [row[j:j + 3] for row in grid[i:i + 3]]
             subgrids.append(subgrid)
-    
+
     return subgrids
 
 
@@ -142,13 +124,12 @@ def joinSubgrids(subgrids) -> List[List[int]]:
         - subgrids (List[List[List[int]]]): lista kolejnych bloków 3x3 planszy
 
     """
+    grid9x9 = [[] * 9 for _ in range(9)]
 
-    grid9x9 = [[0] * 9 for _ in range(9)]
+    for i, subgrid in enumerate(subgrids):
 
-    for i, grid3x3 in enumerate(subgrids):
-        for j, row in enumerate(grid3x3):
-            for k, elem in enumerate(row):
-                grid9x9[j + i // 3 * 3][i % 3 * 3 + k] = elem
+        for j, row in enumerate(subgrid):
+            grid9x9[i // 3 * 3 + j] += row
 
     return grid9x9
 
@@ -162,7 +143,7 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     """
     P = []
     for _ in range(N_POPULATION):
-        new_grid = np.copy(sudoku.grid)
+        new_grid = deepcopy(sudoku.grid)
         subgrids = giveSubgrids(new_grid)
         for subgrid in subgrids:
             nums = set(range(1, 10))
@@ -181,66 +162,67 @@ def createPopulation(sudoku: Sudoku) -> List[Solution]:
     return P
 
 
-
-def mutation(P, prob) -> List[Solution]:
+def mutation(P, prob, sudoku: Sudoku) -> List[Solution]:
     """
     Funckja zwracająca populację rozwiązań sudoku poddanych operacji mutacji z zadanym prawdopodobieństwem mutacji
 
-        - P (List[Solution]): populacja początkowa
-        - prob (float): prawdopodobieństwo mutacji
+
+P (List[Solution]): populacja początkowa
+prob (float): prawdopodobieństwo mutacji
 
     """
     PP = []
+    initial_positions = []
+    for i in range(9):
+        for j in range(9):
+            if sudoku.grid[i][j] != 0:
+                initial_positions += (i, j)
     for solution in P:
         subgrids = giveSubgrids(solution.grid)
-        for subgrid in subgrids:
+        for i, subgrid in enumerate(subgrids):
             if random.random() < prob:  # czy zachodzi mutacja
-                      # Pobieranie możliwych do zamiany pozycji, z wykluczeniem pozycji ustalonych na początku
-                mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i//3*3 + r, i%3*3 + c) in solution.initial_positions)]
+                # Pobieranie możliwych do zamiany pozycji, z wykluczeniem pozycji ustalonych na początku
+                mutable_positions = [(r, c) for r in range(3) for c in range(3) if not ((i // 3 * 3 + r, i % 3 * 3 + c) in initial_positions)]
                 if len(mutable_positions) > 1:
-                    a, b = random.choice(range(len(mutable_positions)), size=2, replace=False)
-                    # Zamiana miejscami wartości
+                    a, b = sample(range(len(mutable_positions)), 2)
                     ra, ca = mutable_positions[a]
                     rb, cb = mutable_positions[b]
                     subgrid[ra][ca], subgrid[rb][cb] = subgrid[rb][cb], subgrid[ra][ca]
-               
-                
+
         mutatedGrid = joinSubgrids(subgrids)
-        PP += (Solution(mutatedGrid))
+        PP.append(Solution(mutatedGrid))
     return PP
 
 
-def crossover(P, crossover_probability = CROSSOVER_PROB) -> List[Solution]:  
+def crossover(P, crossover_probability=CROSSOVER_PROB) -> List[Solution]:
     """
     Funkcja zwracająca populację rozwiązań sudoku poddanych operacji krzyżowania
 
         - P (List[Solution]): populacja początkowa
         - crossover_probabilty (float): prawdopodobieństwo krzyżowania
 
-    """ 
+    """
     PP = []
-   
+
     # trzeba wybrać rodziców o najmniejszych dopasowaniach, a następnie przypadkowo wybrać punkt krzyżowania (jeśli jest 9 subgridów to takich punktów będzie 8)
     # sama operacja krzyżowania to połączenie odpowiedniej ilości bloków 3x3 z jednego i drugiego rodzica - w ten sposób powstanie dwóch potomków, których trzeba dodać do populacji
-    
+
     P = sorted(P, key=lambda s: (s.fitness, random.random()))  # sortowanie rozwiązań według ich dopasowania (rosnąco), jeśli dopasowanie jest takie samo, to kolejność przypadkowa
     n = (N_POPULATION * (N_POPULATION + 1)) / 2  # ilość możliwych par rodziców jakie można wybrać z danej populacji
     prob = [i / n for i in range(1, N_POPULATION + 1)]  # lista prawdopodobieństw - większe prawdopodobieństwo dla rozwiązań o większym dopasowaniu
     for _ in range(N_POPULATION):
-        parent1, parent2 = random.choice(P, p=prob, replace=False, size=2) # wybieranie dwóch różnych losowych rodziców z populacji z uwzględnieniem prawdopodobieństwa dopasowań
+        parent1, parent2 = random.choice(P, p=prob, replace=False, size=2)  # wybieranie dwóch różnych losowych rodziców z populacji z uwzględnieniem prawdopodobieństwa dopasowań
         if random.random() < crossover_probability:
             parent1 = giveSubgrids(parent1.grid)
             parent2 = giveSubgrids(parent2.grid)
-            crossover_point = random.choice(range(1,9))  
+            crossover_point = random.choice(range(1, 9))
             child1 = parent1[:crossover_point] + parent2[crossover_point:]
             child2 = parent2[:crossover_point] + parent1[crossover_point:]
             PP += [Solution(joinSubgrids(child1)), Solution(joinSubgrids(child2))]
         else:
             PP += [parent1, parent2]
-    
+
     return PP
-
-
 
 
 def converge(P) -> bool:
@@ -302,17 +284,35 @@ def best(P) -> Sudoku:
 
 
 def main():
-    print("Hello World!")
+    # print("Hello World!")
 
-    # grid1 = [[6, 5, 0, 0 ,0, 7, 9, 0, 3], 
-    #         [0, 0, 2, 1, 0, 0, 6, 0, 0],
-    #         [9, 0, 0, 0, 6, 3, 0, 0, 4],
-    #         [1, 2, 9, 0, 0, 0, 0, 0, 0],
-    #         [3, 0, 4, 9, 0, 8, 1, 0, 0],
-    #         [0, 0, 0, 3, 0, 0, 4, 7, 9],
-    #         [0, 0, 6, 0, 8, 0, 3, 0, 5],
-    #         [7, 4 ,0, 5, 0, 0, 0, 0, 1],
-    #         [5, 8, 1, 4, 0, 0, 0, 2, 6]]
+    grid1 = [[6, 5, 0, 0, 0, 7, 9, 0, 3],
+             [0, 0, 2, 1, 0, 0, 6, 0, 0],
+             [9, 0, 0, 0, 6, 3, 0, 0, 4],
+             [1, 2, 9, 0, 0, 0, 0, 0, 0],
+             [3, 0, 4, 9, 0, 8, 1, 0, 0],
+             [0, 0, 0, 3, 0, 0, 4, 7, 9],
+             [0, 0, 6, 0, 8, 0, 3, 0, 5],
+             [7, 4, 0, 5, 0, 0, 0, 0, 1],
+             [5, 8, 1, 4, 0, 0, 0, 2, 6]]
+    # grid1 = [
+    #     [9, 0, 2, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 1, 5],
+    #     [7, 0, 0, 6, 0, 2, 0, 0, 0],
+    #     [0, 0, 0, 7, 9, 0, 0, 0, 0],
+    #     [0, 6, 1, 0, 8, 0, 0, 0, 2],
+    #     [0, 0, 0, 0, 3, 0, 1, 0, 0],
+    #     [0, 0, 7, 0, 0, 0, 9, 4, 0],
+    #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
+    #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
+    # ]
+
+    result = GA(Sudoku(grid1))
+    for row in result.grid:
+        print(row)
+    print(Solution(result.grid).fitness)
+
+
     # grid2 = [[0, 6, 0, 0, 1, 3, 5, 4, 0],
     #         [0, 8, 0, 0, 0, 0, 0, 1, 6],
     #         [1, 0, 4, 0, 6, 9, 2, 0, 0],
@@ -329,6 +329,7 @@ def main():
     # for sol in PP:
     #     print(sol.grid)
     #     print(" ")
+
 
 if __name__ == "__main__":
     main()
