@@ -169,8 +169,11 @@ class Swarm:
         Funkcja służąca do uaktualnienia najlepszej pozycji globalnej
 
         """
-        # TODO: należy ustalić parametr self.global_best_position, czyli wybierać spośród self.particles cząstkę o najlepszym dopasowaniu
-        pass
+        best = self.particles[0]
+        for particle in self.particles:
+            if particle.fitness > best.fitness:
+                best = particle
+        self.global_best_position = best
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
@@ -207,8 +210,10 @@ def converge(swarm: Swarm) -> bool:
     """
     Funkcja sprawdzająca czy należy przerwać algorytm GPSO
     """
-    # TODO: czy jest jakaś cząstka z dopasowaniem 273
-    pass
+    for particle in swarm.particles:
+        if particle.fitness == 273:
+            return True
+    return False
 
 def main():
     pass
