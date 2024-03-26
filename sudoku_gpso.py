@@ -107,23 +107,27 @@ class Particle:
 
             weights_frozen = weights
 
-            def get_mask() -> List[List[List[int]]]:
+            def gen_mask(loops: int) -> List[List[List[int]]]:
                 """
                 Funkcja zagnieżdzona, która jest dostępna do wywołania w trakcie działania funkcji crossover
                 (może korzystać z parametrów "zamrożonych", stąd brak parametrów w nawiasach)
 
                 """
 
-                return rnd.choices(parent_tup, weights=weights_frozen, k=9)
+                for _ in range(loops):
+                    yield rnd.choices(parent_tup, weights=weights_frozen, k=9)
 
 
-            func(self, parent_tup, get_mask)  # wykonanie funkcji crossover
+            next_pos = func(self, parent_tup, gen_mask)  # wykonanie funkcji crossover
+
+            # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
+            self.update_curr_pos(next_pos)
 
         return wrapper
 
 
     @decorate_crossover
-    def crossover1(self, parent_tup, get_mask) -> None:
+    def crossover1(self, _, gen_mask) -> List[List[int]]:
         """
         Funkcja krzyżowania - pierwsza wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -131,15 +135,18 @@ class Particle:
         Pierwsze podejście zakłada krzyżowanie po wierszach - kolejne elementy maski odpowiadają kolejnym wierszom planszy. Od razu zwracana jest cała plansza.
 
         """
-        # TODO: implementacja pierwszej wersji krzyżowania
 
-        mask = get_mask()
+        mask = next(gen_mask(1))
+        result = []
 
-        next_pos = []
-        self.update_curr_pos(next_pos)
+        for row, parent in enumerate(mask):
+
+            result.append(parent[row])
+
+        return result
 
     @decorate_crossover
-    def crossover2(self, parent_tup, get_mask):
+    def crossover2(self, parent_tup, gen_mask) -> List[List[int]]:
         """
         Funkcja krzyżowania - druga wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -149,8 +156,7 @@ class Particle:
          
         """
         
-        for row in range(9):
-            mask = get_mask()
+        for row, mask in enumerate(gen_mask(9)):
 
             for pos, parent in enumerate(mask):
                 choice = parent[row][pos]
@@ -160,10 +166,8 @@ class Particle:
                     if other_parent is not parent:
                         pos_choice = other_parent[row].index(choice)
                         swap_elements(other_parent[row], pos, pos_choice)
-        
-        # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
-        next_pos = parent_tup[0]
-        self.update_curr_pos(next_pos)
+
+        return parent_tup[0]
     
     def mutation(self) -> None:
         """
@@ -171,7 +175,6 @@ class Particle:
         """
         next_pos = []
         self.update_curr_pos(next_pos)
-
 
 
 class Swarm:
