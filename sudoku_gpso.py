@@ -1,15 +1,29 @@
+
+from typing import List, Callable, Tuple
+import random as rnd
+from copy import deepcopy
 import copy
 import random
-from typing import List
-import random
+
+
 
 N_SWARM = 100
 N_ITERATIONS = 100
-W1 = 0.3
-W2 = 0.4
-W3 = 0.3
+W1 = 0.3    # waga obecnej pozycji curr_pos
+W2 = 0.4    # waga najlepszej pozycji lokalnej
+W3 = 0.3    # waga najlepszej pozycji globalnej global_best_position
 
 iterations = 0
+
+
+def swap_elements(lst: List[int], pos1: int, pos2: int) -> None:
+    '''
+    Funkcja zamieniająca miejscami wartości na pozycjach pos1 i pos2 w podanej liście lst
+        - param lst: lista, w której następuje zamiana miejsc
+        - param pos1: pierwsza pozycja zamiany
+        - param pos2: druga pozycja zamiany
+    '''
+    lst[pos1], lst[pos2] = lst[pos2], lst[pos1]
 
 class Sudoku:
     def __init__(self, puzzle, level=1) -> None:
@@ -99,16 +113,53 @@ class Particle:
         #TODO: porównanie local_best_position z curr_pos i uaktualnienie wartości local_best_position
         pass
 
-    def get_mask(self, weights) -> List[int]:
-
-        """"
-        Funkcja do wylosowania maski z uwzględnieniem prawdopodobieństw w postacji wag
-        
+    @staticmethod
+    def decorate_crossover(func) -> Callable[[List[List[int]], Tuple[List[List[int]]]], None]:
         """
-        #TODO: stworzenie listy stanowaiącej maskę z uwzględnieniem podanych wag (watośći w liście są z zakresu 1-3)
-        pass
+        Dekorator funkcji crossover do zainicjalizowania tuple'a z rodzicami i udostępnienia funkcji do wylosowania
+        maski z uwzględnieniem prawdopodobieństw w postacji wag
 
-    def crossover1(self, global_best, weights) -> None:
+            - func: funkcja do wykonania (crossover1, bądź crossover2), której funkcjonalności mają zostać
+            rozszerzone o to, co jest we wrapperze
+
+        """
+
+        def wrapper(self, global_best, weights) -> None:
+            """
+            Przy wywołaniu funkcji crossover następuje de facto wywołanie funkcji wrapper, stąd przy wywołaniu crossover
+            podajemy tylko parametry wrappera, a nie funkcji crossover
+
+            """
+
+            parent_tup = (
+                deepcopy(self.curr_pos),
+                deepcopy(self.local_best_position),
+                deepcopy(global_best)
+            )
+
+            weights_frozen = weights
+
+            def gen_mask(loops: int) -> List[List[List[int]]]:
+                """
+                Funkcja zagnieżdzona, która jest dostępna do wywołania w trakcie działania funkcji crossover
+                (może korzystać z parametrów "zamrożonych", stąd brak parametrów w nawiasach)
+
+                """
+
+                for _ in range(loops):
+                    yield rnd.choices(parent_tup, weights=weights_frozen, k=9)
+
+
+            next_pos = func(self, parent_tup, gen_mask)  # wykonanie funkcji crossover
+
+            # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
+            self.update_curr_pos(next_pos)
+
+        return wrapper
+
+
+    @decorate_crossover
+    def crossover1(self, _, gen_mask) -> List[List[int]]:
         """
         Funkcja krzyżowania - pierwsza wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -116,11 +167,18 @@ class Particle:
         Pierwsze podejście zakłada krzyżowanie po wierszach - kolejne elementy maski odpowiadają kolejnym wierszom planszy. Od razu zwracana jest cała plansza.
 
         """
-        # TODO: implementacja pierwszej wersji krzyżowania
-        next_pos = []
-        self.update_curr_pos(next_pos)
 
-    def crossover2(self, global_best, weights) -> None:
+        mask = next(gen_mask(1))
+        result = []
+
+        for row, parent in enumerate(mask):
+
+            result.append(parent[row])
+
+        return result
+
+    @decorate_crossover
+    def crossover2(self, parent_tup, gen_mask) -> List[List[int]]:
         """
         Funkcja krzyżowania - druga wersja
         Na podstawie maski, obecnej pozycji, najlepszej lokalnej pozycji oraz najlepszej globalnej pozycji aktualizujemy obecną pozycję (patrz artykuł sekcja 4.2.)
@@ -129,10 +187,20 @@ class Particle:
         i dopiero wtedy zwracana jest cała plansza.
          
         """
-        # TODO: implementacja drugiej wersji krzyżowania
-        next_pos = []
-        self.update_curr_pos(next_pos)
         
+        for row, mask in enumerate(gen_mask(9)):
+
+            for pos, parent in enumerate(mask):
+                choice = parent[row][pos]
+
+                for other_parent in parent_tup:
+
+                    if other_parent is not parent:
+                        pos_choice = other_parent[row].index(choice)
+                        swap_elements(other_parent[row], pos, pos_choice)
+
+        return parent_tup[0]
+    
     def mutation(self) -> None:
         """
         Funkcja operacji mutacji:  swap two non-fixed elements in a row (patrz artykuł, sekcja 4.1.)
@@ -149,7 +217,6 @@ class Particle:
                 next_pos[i][swap_positions[0]], next_pos[i][swap_positions[1]] = next_pos[i][swap_positions[1]], next_pos[i][swap_positions[0]]
         
         self.update_curr_pos(next_pos)
-
 
 
 class Swarm:
