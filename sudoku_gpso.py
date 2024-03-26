@@ -1,6 +1,10 @@
+
 from typing import List, Callable, Tuple
 import random as rnd
 from copy import deepcopy
+import copy
+import random
+
 
 
 N_SWARM = 100
@@ -31,8 +35,29 @@ class Sudoku:
         self.level = level
 
     def __str__(self) -> str:
-        # TODO: wypisywanie planszy sudoku wraz z ich poziomem trudności
-        pass
+        separator_line = "+-------+------+------+"
+        rows = []
+        for i in range(9):
+            if i % 3 == 0:
+                rows.append(separator_line)
+            row = "|"
+            for j in range(9):
+                if j % 3 == 0:
+                    row += " "
+                if self.grid[i][j] == 0:
+                    row += "."
+                else:
+                    row += str(self.grid[i][j])
+                row += " "
+            row += "|"
+            rows.append(row)
+        rows.append(separator_line)
+        
+        # Informacja o poziomie trudności:
+        level_info = f"Difficulty Level: {self.level}"
+        rows.insert(0, level_info)
+        
+        return '\n'.join(rows)
 
 class Particle:
     """
@@ -50,15 +75,22 @@ class Particle:
             - fitness int: miara dopasowania
             - sudoku (List[List[int]]): plansza
         """
-    def first_position(self, sudoku) -> None:
+
+    def first_position(self, sudoku: Sudoku) -> List[List[int]]:
         """
         Funkcja ustalająca pierwszą pozycję cząstki
 
-            - sudoku (List[List[int]]): plansza sudoku
+            - sudoku (Sudoku): plansza sudoku
 
         """
-        # TODO: przypisywanie randomowych wartości z zakresu 1-9 pustym polom (nie ruszamy tego co było w podanej planszy) tak, żeby w każdym wierszu nie było powtórzeń
-        pass
+        for row in sudoku.grid:
+            empty_indices = [i for i, x in enumerate(row) if x == 0]
+            possible_values = list(set(range(1, 10)) - set(row))
+            random.shuffle(possible_values)
+            for index in empty_indices:
+                row[index] = possible_values.pop()
+
+        return sudoku.grid
 
     def update_curr_pos(self, pos) -> None:
         self.set_local_best_pos(pos)
@@ -173,7 +205,17 @@ class Particle:
         """
         Funkcja operacji mutacji:  swap two non-fixed elements in a row (patrz artykuł, sekcja 4.1.)
         """
-        next_pos = []
+
+        next_pos = [row[:] for row in self.curr_pos]  # Tworzymy głęboką kopię obecnej pozycji
+        for i in range(9):  # i - wiersz, j - kolumna
+            # wyszukanie pozycji, które można zamienić
+            non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.sudoku.grid[i][j] == 0]
+            
+            if len(non_fixed_positions) > 1:
+                swap_positions = random.sample(non_fixed_positions, 2) 
+
+                next_pos[i][swap_positions[0]], next_pos[i][swap_positions[1]] = next_pos[i][swap_positions[1]], next_pos[i][swap_positions[0]]
+        
         self.update_curr_pos(next_pos)
 
 
@@ -205,8 +247,11 @@ class Swarm:
         Funkcja służąca do uaktualnienia najlepszej pozycji globalnej
 
         """
-        # TODO: należy ustalić parametr self.global_best_position, czyli wybierać spośród self.particles cząstkę o najlepszym dopasowaniu
-        pass
+        best = self.particles[0]
+        for particle in self.particles:
+            if particle.fitness > best.fitness:
+                best = particle
+        self.global_best_position = best
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
@@ -243,8 +288,10 @@ def converge(swarm: Swarm) -> bool:
     """
     Funkcja sprawdzająca czy należy przerwać algorytm GPSO
     """
-    # TODO: czy jest jakaś cząstka z dopasowaniem 273
-    pass
+    for particle in swarm.particles:
+        if particle.fitness == 273:
+            return True
+    return False
 
 def main():
     pass
