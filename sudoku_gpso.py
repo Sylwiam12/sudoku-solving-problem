@@ -100,7 +100,7 @@ class Particle:
         sum of number of unique elements in each box (patrz artykuł, sekcja 4.1)
         
         """
-        
+
         # Suma unikalnych elementów w każdym wierszu
         row_fitness = sum(len(set(row)) for row in self.curr_pos)
 
