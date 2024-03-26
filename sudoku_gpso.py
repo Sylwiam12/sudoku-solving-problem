@@ -2,7 +2,6 @@
 from typing import List, Callable, Tuple
 import random as rnd
 from copy import deepcopy
-import copy
 import random
 
 
@@ -96,14 +95,12 @@ class Particle:
         self.set_local_best_pos(pos)
         self.curr_pos = pos
 
-    def set_fitness(self) -> None:
+    def set_fitness(self) -> int:
         """
         Funkcja obliczająca dopasowanie cząstki: sum of number of unique elements in each row, plus, sum of number of unique elements in each column, plus, 
         sum of number of unique elements in each box (patrz artykuł, sekcja 4.1)
         
         """
-        
-       
         
         # Suma unikalnych elementów w każdym wierszu
         row_fitness = sum(len(set(row)) for row in self.curr_pos)
@@ -127,7 +124,7 @@ class Particle:
         Funkcja służąca do uaktualnienia najlepszej pozycji lokalnej
         
         """
-        if self.fitness < Paticle.set_fitness(next_pos):
+        if self.fitness < Particle.set_fitness(next_pos):
            self.local_best_position = next_pos
            self.fitness = Particle.set_fitness(next_pos)
 
@@ -190,7 +187,6 @@ class Particle:
         result = []
 
         for row, parent in enumerate(mask):
-
             result.append(parent[row])
 
         return result
@@ -269,7 +265,7 @@ class Swarm:
         for particle in self.particles:
             if particle.fitness > best.fitness:
                 best = particle
-        self.global_best_position = best
+        self.global_best_position = best.curr_pos
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
@@ -312,7 +308,32 @@ def converge(swarm: Swarm) -> bool:
     return False
 
 def main():
-    pass
+    grid1 = [[6, 5, 0, 0, 0, 7, 9, 0, 3],
+             [0, 0, 2, 1, 0, 0, 6, 0, 0],
+             [9, 0, 0, 0, 6, 3, 0, 0, 4],
+             [1, 2, 9, 0, 0, 0, 0, 0, 0],
+             [3, 0, 4, 9, 0, 8, 1, 0, 0],
+             [0, 0, 0, 3, 0, 0, 4, 7, 9],
+             [0, 0, 6, 0, 8, 0, 3, 0, 5],
+             [7, 4, 0, 5, 0, 0, 0, 0, 1],
+             [5, 8, 1, 4, 0, 0, 0, 2, 6]]
+    # grid1 = [
+    #     [9, 0, 2, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 1, 5],
+    #     [7, 0, 0, 6, 0, 2, 0, 0, 0],
+    #     [0, 0, 0, 7, 9, 0, 0, 0, 0],
+    #     [0, 6, 1, 0, 8, 0, 0, 0, 2],
+    #     [0, 0, 0, 0, 3, 0, 1, 0, 0],
+    #     [0, 0, 7, 0, 0, 0, 9, 4, 0],
+    #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
+    #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
+    # ]
+
+    result = GPSO(Sudoku(grid1))
+    for row in result.grid:
+        print(row)
+    print(Solution(result.grid).fitness)
+
 
 if __name__ == "__main__":
     main()
