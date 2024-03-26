@@ -128,7 +128,7 @@ class Particle:
         
         """
         if self.fitness < Paticle.set_fitness(next_pos):
-           self.local_best_position = next_pos
+           self.local_best_position = next_pos.curr_pos
            self.fitness = Particle.set_fitness(next_pos)
 
     @staticmethod
@@ -269,7 +269,7 @@ class Swarm:
         for particle in self.particles:
             if particle.fitness > best.fitness:
                 best = particle
-        self.global_best_position = best
+        self.global_best_position = best.curr_pos
 
     def get_global_best(self) -> List[List[int]]:
         return self.global_best_position
