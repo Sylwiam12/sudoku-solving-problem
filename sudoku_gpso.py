@@ -127,9 +127,8 @@ class Particle:
         Funkcja służąca do uaktualnienia najlepszej pozycji lokalnej
         
         """
-        #print('better fitn: ', self.set_fitness(next_pos), self.fitness)
+
         if self.fitness < self.set_fitness(next_pos):
-            print('better fitn: ', self.set_fitness(next_pos), self.fitness)
             self.local_best_position = next_pos
             self.fitness = self.set_fitness(next_pos)
 
