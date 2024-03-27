@@ -6,10 +6,12 @@ from copy import deepcopy
 
 N_SWARM = 100
 N_ITERATIONS = 100
-W1 = 0.1    # waga obecnej pozycji curr_pos
-W2 = 0.4    # waga najlepszej pozycji lokalnej
+W1 = 0.2   # waga obecnej pozycji curr_pos
+W2 = 0.5    # waga najlepszej pozycji lokalnej
 W3 = 0.3    # waga najlepszej pozycji globalnej global_best_position
 
+MUTATION_PROB = 1  # prawdopodobieństwo mutacji
+CROSSOVER_PROB = 1  # prawdopodobieństwo krzyżowania
 iterations = 0
 
 
@@ -125,7 +127,9 @@ class Particle:
         Funkcja służąca do uaktualnienia najlepszej pozycji lokalnej
         
         """
+        #print('better fitn: ', self.set_fitness(next_pos), self.fitness)
         if self.fitness < self.set_fitness(next_pos):
+            print('better fitn: ', self.set_fitness(next_pos), self.fitness)
             self.local_best_position = next_pos
             self.fitness = self.set_fitness(next_pos)
 
@@ -168,7 +172,6 @@ class Particle:
 
             next_pos = func(self, parent_tup, gen_mask)  # wykonanie funkcji crossover
 
-            # po operacji krzyżowania każda kopia z trzech cząstek zawiera ten sam wynik krzyżowania (każda jest sobie równa)
             self.update_curr_pos(next_pos)
 
         return wrapper
@@ -216,21 +219,22 @@ class Particle:
 
         return parent_tup[0]
     
-    def mutation(self) -> None:
+    def mutation(self, swaps) -> None:
         """
         Funkcja operacji mutacji:  swap two non-fixed elements in a row (patrz artykuł, sekcja 4.1.)
         """
 
-        next_pos = [row[:] for row in self.curr_pos]  # Tworzymy głęboką kopię obecnej pozycji
-        for i in range(9):  # i - wiersz, j - kolumna
+        next_pos = deepcopy(self.curr_pos)  # Tworzymy głęboką kopię obecnej pozycji
+        rows_swaps = rnd.sample(list(range(9)), swaps)
+        for i in rows_swaps:  # i - wiersz, j - kolumna
             # wyszukanie pozycji, które można zamienić
-            non_fixed_positions = [j for j, val in enumerate(self.curr_pos[i]) if self.curr_pos[i][j] == 0]
-            
+            non_fixed_positions = [j for j, val in enumerate(self.sudoku.grid[i]) if self.sudoku.grid[i][j] == 0]
+
             if len(non_fixed_positions) > 1:
                 swap_positions = rnd.sample(non_fixed_positions, 2)
 
                 next_pos[i][swap_positions[0]], next_pos[i][swap_positions[1]] = next_pos[i][swap_positions[1]], next_pos[i][swap_positions[0]]
-        
+
         self.update_curr_pos(next_pos)
 
 
@@ -265,7 +269,6 @@ class Swarm:
         """
         best = self.particles[0]
         for particle in self.particles:
-            print(particle.fitness)
             if particle.fitness > best.fitness:
                 best = particle
 
@@ -292,8 +295,8 @@ def GPSO(sudoku: Sudoku) -> Sudoku:
 
         for particle in swarm.particles:
 
-            particle.crossover2(swarm.get_global_best().curr_pos, swarm.get_weights())
-            particle.mutation()
+            particle.crossover2(swarm.get_global_best().curr_pos, swarm.get_weights()) if rnd.random() < CROSSOVER_PROB else None
+            particle.mutation(int(rnd.triangular(1, 10, 1))) if rnd.random() < MUTATION_PROB else None
             swarm2.add_particle(particle)
 
         swarm = swarm2
