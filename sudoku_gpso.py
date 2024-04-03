@@ -273,7 +273,7 @@ class Swarm:
 
         self.global_best_position = best
 
-    def get_global_best(self) -> List[List[int]]:
+    def get_global_best(self) -> Particle:
         return self.global_best_position
     
     def get_weights(self) -> tuple[float, float, float]:
@@ -313,6 +313,7 @@ def converge(swarm: Swarm) -> bool:
         if particle.fitness == 273:
             return True
     return False
+
 
 def main():
     grid1 = [[6, 0, 0, 0, 0, 7, 9, 0, 3],
