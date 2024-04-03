@@ -4,13 +4,13 @@ from copy import deepcopy
 
 
 
-N_SWARM = 100
-N_ITERATIONS = 100
-W1 = 0.2   # waga obecnej pozycji curr_pos
+N_SWARM = 200
+N_ITERATIONS = 200
+W1 = 0.3   # waga obecnej pozycji curr_pos
 W2 = 0.5    # waga najlepszej pozycji lokalnej
-W3 = 0.3    # waga najlepszej pozycji globalnej global_best_position
+W3 = 0.2    # waga najlepszej pozycji globalnej global_best_position
 
-MUTATION_PROB = 1  # prawdopodobieństwo mutacji
+MUTATION_PROB = 0.7  # prawdopodobieństwo mutacji
 CROSSOVER_PROB = 1  # prawdopodobieństwo krzyżowania
 iterations = 0
 
@@ -310,7 +310,7 @@ def converge(swarm: Swarm) -> bool:
     Funkcja sprawdzająca czy należy przerwać algorytm GPSO
     """
     for particle in swarm.particles:
-        if particle.fitness == 273:
+        if particle.fitness == 243:
             return True
     return False
 
@@ -336,6 +336,7 @@ def main():
     #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
     #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
     # ]
+
     print('Initial sudoku fitness:', Particle(Sudoku(grid1)).fitness)
 
     best_particle = GPSO(Sudoku(grid1))
