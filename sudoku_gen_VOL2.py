@@ -7,6 +7,7 @@ import numpy as np
 from typing import List
 from numpy import random
 from copy import deepcopy
+from input_sudoku import *
 
 
 # TODO: parametry do zmiany
@@ -90,7 +91,7 @@ def GA(sudoku: Sudoku) -> Sudoku:
 
     """
     global iterations
-
+    
     P = createPopulation(sudoku)
     while not converge(P) and iterations < MAX_ITERATIONS:  # wykonujemy dopóki nie znaleziono dokładnego rozwiązania lub nie wykonano określonej liczby iteracji
         PP = crossover(P)
@@ -283,52 +284,16 @@ def best(P) -> Sudoku:
     return Sudoku(P[0].grid)
 
 
-def main():
-    # print("Hello World!")
+def main() -> None:
+    '''
+    Main pipeline
+    '''
+    print('Initial sudoku fitness:', Solution(INPUT_GRID).fitness)
 
-    grid1 = [[6, 5, 0, 0, 0, 7, 9, 0, 3],
-             [0, 0, 2, 1, 0, 0, 6, 0, 0],
-             [9, 0, 0, 0, 6, 3, 0, 0, 4],
-             [1, 2, 9, 0, 0, 0, 0, 0, 0],
-             [3, 0, 4, 9, 0, 8, 1, 0, 0],
-             [0, 0, 0, 3, 0, 0, 4, 7, 9],
-             [0, 0, 6, 0, 8, 0, 3, 0, 5],
-             [7, 4, 0, 5, 0, 0, 0, 0, 1],
-             [5, 8, 1, 4, 0, 0, 0, 2, 6]]
-    # grid1 = [
-    #     [9, 0, 2, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 1, 5],
-    #     [7, 0, 0, 6, 0, 2, 0, 0, 0],
-    #     [0, 0, 0, 7, 9, 0, 0, 0, 0],
-    #     [0, 6, 1, 0, 8, 0, 0, 0, 2],
-    #     [0, 0, 0, 0, 3, 0, 1, 0, 0],
-    #     [0, 0, 7, 0, 0, 0, 9, 4, 0],
-    #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
-    #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
-    # ]
+    result = GA(Sudoku(INPUT_GRID, level=DIFFICULTY))
 
-    result = GA(Sudoku(grid1))
-    for row in result.grid:
-        print(row)
-    print(Solution(result.grid).fitness)
-
-
-    # grid2 = [[0, 6, 0, 0, 1, 3, 5, 4, 0],
-    #         [0, 8, 0, 0, 0, 0, 0, 1, 6],
-    #         [1, 0, 4, 0, 6, 9, 2, 0, 0],
-    #         [0, 0, 1, 0, 7, 0, 0, 6, 0],
-    #         [0, 0, 6, 0, 2, 0, 3, 0, 0],
-    #         [0, 9, 0, 0, 3, 0, 4, 0, 0],
-    #         [0, 0, 8, 7, 4, 0, 6, 0, 3],
-    #         [5, 3, 0, 0, 0, 0, 0, 9, 0],
-    #         [0, 4, 2, 3, 9, 0, 0, 8, 0]]
-    # sol1 = Solution(grid1)
-    # sol2 = Solution(grid2)
-    # P = [sol1, sol2]
-    # PP = crossover(P)
-    # for sol in PP:
-    #     print(sol.grid)
-    #     print(" ")
+    print(result)
+    print('Final fitness:', Solution(result.grid).fitness)
 
 
 if __name__ == "__main__":

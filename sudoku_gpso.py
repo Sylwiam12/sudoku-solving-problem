@@ -2,7 +2,7 @@ from typing import List, Callable, Tuple
 import random as rnd
 from copy import deepcopy
 
-
+from input_sudoku import *
 
 N_SWARM = 200
 N_ITERATIONS = 200
@@ -57,6 +57,7 @@ class Sudoku:
         rows.insert(0, level_info)
         
         return '\n'.join(rows)
+
 
 class Particle:
     """
@@ -299,7 +300,7 @@ def GPSO(sudoku: Sudoku) -> Sudoku:
             swarm2.add_particle(particle)
 
         swarm = swarm2
-        swarm.set_global_best() # TODO: omówić sposób updatowania global_best - czy po każdym krzyżowaniu cząstki? czy tak jak teraz, na nowym roju? 
+        swarm.set_global_best()
           
         iterations += 1
         
@@ -315,34 +316,17 @@ def converge(swarm: Swarm) -> bool:
     return False
 
 
-def main():
-    grid1 = [[6, 0, 0, 0, 0, 7, 9, 0, 3],
-             [0, 0, 2, 1, 0, 0, 6, 0, 0],
-             [9, 0, 0, 0, 6, 3, 0, 0, 0],
-             [1, 2, 9, 0, 0, 0, 0, 0, 0],
-             [3, 0, 4, 9, 0, 8, 1, 0, 0],
-             [0, 0, 0, 3, 0, 0, 4, 7, 9],
-             [0, 0, 6, 0, 8, 0, 0, 0, 0],
-             [7, 4, 0, 5, 0, 0, 0, 0, 1],
-             [5, 8, 1, 4, 0, 0, 0, 2, 6]]
-    # grid1 = [
-    #     [9, 0, 2, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 1, 5],
-    #     [7, 0, 0, 6, 0, 2, 0, 0, 0],
-    #     [0, 0, 0, 7, 9, 0, 0, 0, 0],
-    #     [0, 6, 1, 0, 8, 0, 0, 0, 2],
-    #     [0, 0, 0, 0, 3, 0, 1, 0, 0],
-    #     [0, 0, 7, 0, 0, 0, 9, 4, 0],
-    #     [4, 0, 0, 0, 0, 0, 0, 2, 1],
-    #     [0, 8, 0, 0, 0, 4, 6, 0, 0]
-    # ]
+def main() -> None:
+    '''
+    Main pipeline
+    '''
+    print('Initial sudoku fitness:', Particle(Sudoku(INPUT_GRID)).fitness)
 
-    print('Initial sudoku fitness:', Particle(Sudoku(grid1)).fitness)
+    best_particle = GPSO(Sudoku(INPUT_GRID, level=DIFFICULTY))
 
-    best_particle = GPSO(Sudoku(grid1))
-
-    print(Sudoku(best_particle.curr_pos))
-    print('Final fitness: ', best_particle.fitness)
+    best = Sudoku(best_particle.local_best_position)
+    print(best)
+    print('Final fitness:', Particle(best).fitness)
 
 
 if __name__ == "__main__":
